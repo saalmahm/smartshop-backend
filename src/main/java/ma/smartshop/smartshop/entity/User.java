@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import ma.youcode.smartshop.enums.UserRole;
+import ma.smartshop.smartshop.enums.UserRole;
 
 @Entity
 @Table(name = "users")
