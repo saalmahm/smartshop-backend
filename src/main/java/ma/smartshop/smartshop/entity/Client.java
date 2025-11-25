@@ -1,4 +1,5 @@
 package ma.smartshop.smartshop.entity;
+import ma.smartshop.smartshop.entity.User;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -45,4 +46,8 @@ public class Client {
     private LocalDateTime firstOrderDate;
 
     private LocalDateTime lastOrderDate;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
 }
