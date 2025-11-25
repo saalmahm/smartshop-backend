@@ -1,6 +1,7 @@
 package ma.smartshop.smartshop.client;
 
 import lombok.RequiredArgsConstructor;
+import ma.smartshop.smartshop.client.dto.ClientProfileDto;
 import ma.smartshop.smartshop.client.dto.ClientRequestDto;
 import ma.smartshop.smartshop.client.dto.ClientResponseDto;
 import ma.smartshop.smartshop.client.mapper.ClientMapper;
@@ -51,4 +52,10 @@ public class ClientService {
                 .map(clientMapper::toResponseDto)
                 .toList();
     }
+
+    public ClientProfileDto getProfileForUser(Long userId) {
+        Client client = clientRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Client not found for user " + userId));
+        return clientMapper.toProfileDto(client);
+}
 }
