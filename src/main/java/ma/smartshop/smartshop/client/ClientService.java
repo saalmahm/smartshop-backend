@@ -8,11 +8,13 @@ import ma.smartshop.smartshop.client.mapper.ClientMapper;
 import ma.smartshop.smartshop.entity.Client;
 import ma.smartshop.smartshop.enums.CustomerTier;
 import ma.smartshop.smartshop.repository.ClientRepository;
+import ma.smartshop.smartshop.loyalty.LoyaltyService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class ClientService {
 
     private final ClientRepository clientRepository;
     private final ClientMapper clientMapper;
+    private final LoyaltyService loyaltyService;
 
     public ClientResponseDto createClient(ClientRequestDto dto) {
         Client client = clientMapper.toEntity(dto);
@@ -57,5 +60,32 @@ public class ClientService {
         Client client = clientRepository.findByUserId(userId)
                 .orElseThrow(() -> new RuntimeException("Client not found for user " + userId));
         return clientMapper.toProfileDto(client);
+    }
+
+    public List<Object> getOrderHistoryForUser(Long userId) {
+    // TODO: à implémenter quand l'entité Order sera créée
+    return List.of();
+    }
+
+    public void applyConfirmedOrder(Long clientId, BigDecimal orderTotal) {
+    Client client = clientRepository.findById(clientId)
+            .orElseThrow(() -> new RuntimeException("Client not found"));
+
+    client.setTotalOrders(client.getTotalOrders() + 1);
+    client.setTotalSpent(client.getTotalSpent().add(orderTotal));
+
+    LocalDateTime now = LocalDateTime.now();
+    if (client.getFirstOrderDate() == null) {
+        client.setFirstOrderDate(now);
+    }
+    client.setLastOrderDate(now);
+
+    CustomerTier newTier = loyaltyService.calculateTier(
+            client.getTotalOrders(),
+            client.getTotalSpent()
+    );
+    client.setTier(newTier);
+
+    clientRepository.save(client);
 }
 }
