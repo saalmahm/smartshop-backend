@@ -84,6 +84,20 @@ public class PaymentService {
         return paymentMapper.toResponseDto(saved);
     }
 
+    public java.util.List<PaymentResponseDto> getPaymentsByOrderId(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        java.util.List<Payment> payments = paymentRepository.findByOrderOrderByPaymentNumberAsc(order);
+        java.util.List<PaymentResponseDto> dtos = new java.util.ArrayList<>();
+
+        for (Payment payment : payments) {
+            dtos.add(paymentMapper.toResponseDto(payment));
+        }
+
+        return dtos;
+    }
+
     private void recalculateRemainingAmount(Order order) {
         java.util.List<Payment> payments = paymentRepository.findByOrderAndStatus(order, PaymentStatus.ENCAISSE);
 
