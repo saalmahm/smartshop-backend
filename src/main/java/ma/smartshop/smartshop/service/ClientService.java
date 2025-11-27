@@ -12,6 +12,8 @@ import ma.smartshop.smartshop.dto.client.ClientUserCreateRequestDto;
 import ma.smartshop.smartshop.entity.User;
 import ma.smartshop.smartshop.enums.UserRole;
 import ma.smartshop.smartshop.repository.UserRepository;
+import ma.smartshop.smartshop.exception.BusinessValidationException;
+import ma.smartshop.smartshop.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +41,7 @@ public class ClientService {
 
     public ClientResponseDto updateClient(Long id, ClientRequestDto dto) {
         Client client = clientRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+             .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
         clientMapper.updateEntityFromDto(dto, client);
         return clientMapper.toResponseDto(clientRepository.save(client));
     }
@@ -62,7 +64,7 @@ public class ClientService {
 
     public ClientProfileDto getProfileForUser(Long userId) {
         Client client = clientRepository.findByUserId(userId)
-                .orElseThrow(() -> new RuntimeException("Client not found for user " + userId));
+            .orElseThrow(() -> new ResourceNotFoundException("Client not found for user " + userId));
         return clientMapper.toProfileDto(client);
     }
 
@@ -73,7 +75,7 @@ public class ClientService {
 
     public void applyConfirmedOrder(Long clientId, BigDecimal orderTotal) {
     Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new RuntimeException("Client not found"));
+        .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
 
     client.setTotalOrders(client.getTotalOrders() + 1);
     client.setTotalSpent(client.getTotalSpent().add(orderTotal));
@@ -94,17 +96,17 @@ public class ClientService {
 }
 
     public ClientResponseDto createUserForClient(Long clientId, ClientUserCreateRequestDto dto) {
-        Client client = clientRepository.findById(clientId)
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+       Client client = clientRepository.findById(clientId)
+        .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
 
         if (client.getUser() != null) {
-            throw new RuntimeException("Client already has a user account");
+            throw new BusinessValidationException("Client already has a user account");
         }
 
         userRepository.findByUsername(dto.getUsername())
-                .ifPresent(u -> {
-                    throw new RuntimeException("Username already exists");
-                });
+          .ifPresent(u -> {
+            throw new BusinessValidationException("Username already exists");
+        });
 
         User user = User.builder()
                 .username(dto.getUsername())
