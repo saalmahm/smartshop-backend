@@ -9,6 +9,10 @@ import ma.smartshop.smartshop.entity.Client;
 import ma.smartshop.smartshop.enums.CustomerTier;
 import ma.smartshop.smartshop.repository.ClientRepository;
 import ma.smartshop.smartshop.loyalty.LoyaltyService;
+import ma.smartshop.smartshop.client.dto.ClientUserCreateRequestDto;
+import ma.smartshop.smartshop.entity.User;
+import ma.smartshop.smartshop.enums.UserRole;
+import ma.smartshop.smartshop.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +28,7 @@ public class ClientService {
     private final ClientRepository clientRepository;
     private final ClientMapper clientMapper;
     private final LoyaltyService loyaltyService;
+    private final UserRepository userRepository;
 
     public ClientResponseDto createClient(ClientRequestDto dto) {
         Client client = clientMapper.toEntity(dto);
@@ -88,4 +93,31 @@ public class ClientService {
 
     clientRepository.save(client);
 }
+
+    public ClientResponseDto createUserForClient(Long clientId, ClientUserCreateRequestDto dto) {
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new RuntimeException("Client not found"));
+
+        if (client.getUser() != null) {
+            throw new RuntimeException("Client already has a user account");
+        }
+
+        userRepository.findByUsername(dto.getUsername())
+                .ifPresent(u -> {
+                    throw new RuntimeException("Username already exists");
+                });
+
+        User user = User.builder()
+                .username(dto.getUsername())
+                .password(dto.getPassword())
+                .role(UserRole.CLIENT)
+                .build();
+
+        User savedUser = userRepository.save(user);
+
+        client.setUser(savedUser);
+        Client savedClient = clientRepository.save(client);
+
+        return clientMapper.toResponseDto(savedClient);
+    }
 }
