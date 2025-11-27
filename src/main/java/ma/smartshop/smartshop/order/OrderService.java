@@ -14,6 +14,7 @@ import ma.smartshop.smartshop.order.dto.OrderResponseDto;
 import ma.smartshop.smartshop.repository.ClientRepository;
 import ma.smartshop.smartshop.repository.OrderRepository;
 import ma.smartshop.smartshop.repository.ProductRepository;
+import ma.smartshop.smartshop.order.OrderCalculationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,8 +32,9 @@ public class OrderService {
     private final ClientRepository clientRepository;
     private final ProductRepository productRepository;
     private final ClientService clientService;
+    private final OrderCalculationService orderCalculationService;
 
-    public OrderResponseDto createOrder(OrderCreateRequestDto dto) {
+        public OrderResponseDto createOrder(OrderCreateRequestDto dto) {
         if (dto.getItems() == null || dto.getItems().isEmpty()) {
             throw new RuntimeException("Order must contain at least one item");
         }
@@ -67,22 +69,23 @@ public class OrderService {
             product.setStockQuantity(product.getStockQuantity() - itemDto.getQuantity());
         }
 
-        BigDecimal discount = BigDecimal.ZERO;
-        BigDecimal totalHtAfterDiscount = subTotal.subtract(discount);
-        BigDecimal tva = BigDecimal.ZERO;
-        BigDecimal totalTtc = totalHtAfterDiscount.add(tva);
+        OrderCalculationService.OrderAmounts amounts = orderCalculationService.calculate(
+                subTotal,
+                client,
+                dto.getPromoCode()
+        );
 
         Order order = Order.builder()
                 .client(client)
                 .createdAt(LocalDateTime.now())
-                .subTotalHt(subTotal)
-                .discountAmount(discount)
-                .totalHtAfterDiscount(totalHtAfterDiscount)
-                .tvaAmount(tva)
-                .totalTtc(totalTtc)
+                .subTotalHt(amounts.subTotalHt())
+                .discountAmount(amounts.discountAmount())
+                .totalHtAfterDiscount(amounts.totalHtAfterDiscount())
+                .tvaAmount(amounts.tvaAmount())
+                .totalTtc(amounts.totalTtc())
                 .promoCode(dto.getPromoCode())
                 .status(OrderStatus.PENDING)
-                .remainingAmount(totalTtc)
+                .remainingAmount(amounts.totalTtc())
                 .build();
 
         for (OrderItem item : items) {
