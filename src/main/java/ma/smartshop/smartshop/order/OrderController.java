@@ -3,6 +3,8 @@ package ma.smartshop.smartshop.order;
 import lombok.RequiredArgsConstructor;
 import ma.smartshop.smartshop.order.dto.OrderCreateRequestDto;
 import ma.smartshop.smartshop.order.dto.OrderResponseDto;
+import ma.smartshop.smartshop.payment.PaymentService;
+import ma.smartshop.smartshop.payment.dto.PaymentResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +16,7 @@ import java.util.List;
 public class OrderController {
 
     private final OrderService orderService;
+    private final PaymentService paymentService;
 
     @PostMapping
     public ResponseEntity<OrderResponseDto> createOrder(@RequestBody OrderCreateRequestDto dto) {
@@ -49,5 +52,11 @@ public class OrderController {
     public ResponseEntity<OrderResponseDto> rejectOrder(@PathVariable Long id) {
         OrderResponseDto order = orderService.rejectOrder(id);
         return ResponseEntity.ok(order);
+    }
+
+    @GetMapping("/{id}/payments")
+    public ResponseEntity<java.util.List<PaymentResponseDto>> getOrderPayments(@PathVariable Long id) {
+        java.util.List<PaymentResponseDto> payments = paymentService.getPaymentsByOrderId(id);
+        return ResponseEntity.ok(payments);
     }
 }

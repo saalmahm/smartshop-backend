@@ -9,4 +9,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
 
     int countByOrder(Order order);
     java.util.List<Payment> findByOrderAndStatus(Order order, PaymentStatus status);
+    java.util.List<Payment> findByOrderOrderByPaymentNumberAsc(Order order);
 }
