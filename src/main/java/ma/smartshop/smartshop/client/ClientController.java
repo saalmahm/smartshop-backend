@@ -3,6 +3,7 @@ package ma.smartshop.smartshop.client;
 import lombok.RequiredArgsConstructor;
 import ma.smartshop.smartshop.client.dto.ClientRequestDto;
 import ma.smartshop.smartshop.client.dto.ClientResponseDto;
+import ma.smartshop.smartshop.client.dto.ClientUserCreateRequestDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,5 +41,11 @@ public class ClientController {
     @GetMapping
     public ResponseEntity<List<ClientResponseDto>> getAllClients() {
         return ResponseEntity.ok(clientService.getAllClients());
+    }
+
+    @PostMapping("/{id}/user")
+    public ResponseEntity<ClientResponseDto> createClientUser(@PathVariable Long id,
+                                                              @RequestBody ClientUserCreateRequestDto dto) {
+        return ResponseEntity.ok(clientService.createUserForClient(id, dto));
     }
 }
