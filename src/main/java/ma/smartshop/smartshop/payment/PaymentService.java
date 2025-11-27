@@ -77,16 +77,27 @@ public class PaymentService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        if (status == PaymentStatus.ENCAISSE) {
-            BigDecimal newRemaining = order.getRemainingAmount().subtract(dto.getAmount());
-            if (newRemaining.compareTo(BigDecimal.ZERO) < 0) {
-                throw new RuntimeException("Payment amount exceeds remaining amount");
-            }
-            order.setRemainingAmount(newRemaining);
-            orderRepository.save(order);
+        Payment saved = paymentRepository.save(payment);
+
+        recalculateRemainingAmount(order);
+
+        return paymentMapper.toResponseDto(saved);
+    }
+
+    private void recalculateRemainingAmount(Order order) {
+        java.util.List<Payment> payments = paymentRepository.findByOrderAndStatus(order, PaymentStatus.ENCAISSE);
+
+        BigDecimal totalPaid = BigDecimal.ZERO;
+        for (Payment p : payments) {
+            totalPaid = totalPaid.add(p.getAmount());
         }
 
-        Payment saved = paymentRepository.save(payment);
-        return paymentMapper.toResponseDto(saved);
+        BigDecimal newRemaining = order.getTotalTtc().subtract(totalPaid);
+        if (newRemaining.compareTo(BigDecimal.ZERO) < 0) {
+            newRemaining = BigDecimal.ZERO;
+        }
+
+        order.setRemainingAmount(newRemaining);
+        orderRepository.save(order);
     }
 }
