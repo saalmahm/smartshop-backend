@@ -98,6 +98,21 @@ public class OrderService {
         return toResponseDto(saved);
     }
 
+    public OrderResponseDto getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+        return toResponseDto(order);
+    }
+
+    public List<OrderResponseDto> getAllOrders() {
+        List<Order> orders = orderRepository.findAll();
+        List<OrderResponseDto> dtos = new ArrayList<>();
+        for (Order order : orders) {
+            dtos.add(toResponseDto(order));
+        }
+        return dtos;
+    }
+
     private OrderResponseDto toResponseDto(Order order) {
         OrderResponseDto dto = new OrderResponseDto();
         dto.setId(order.getId());
@@ -125,5 +140,53 @@ public class OrderService {
         dto.setItems(items);
 
         return dto;
+    }
+
+    public OrderResponseDto confirmOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Only pending orders can be confirmed");
+        }
+
+        if (order.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0) {
+            throw new RuntimeException("Order is not fully paid");
+        }
+
+        order.setStatus(OrderStatus.CONFIRMED);
+        orderRepository.save(order);
+
+        clientService.applyConfirmedOrder(order.getClient().getId(), order.getTotalTtc());
+
+        return toResponseDto(order);
+    }
+
+    public OrderResponseDto cancelOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Only pending orders can be canceled");
+        }
+
+        order.setStatus(OrderStatus.CANCELED);
+        orderRepository.save(order);
+
+        return toResponseDto(order);
+    }
+
+    public OrderResponseDto rejectOrder(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new RuntimeException("Only pending orders can be rejected");
+        }
+
+        order.setStatus(OrderStatus.REJECTED);
+        orderRepository.save(order);
+
+        return toResponseDto(order);
     }
 }
