@@ -10,6 +10,8 @@ import ma.smartshop.smartshop.dto.order.OrderCreateRequestDto;
 import ma.smartshop.smartshop.dto.order.OrderItemRequestDto;
 import ma.smartshop.smartshop.dto.order.OrderItemSummaryDto;
 import ma.smartshop.smartshop.dto.order.OrderResponseDto;
+import ma.smartshop.smartshop.exception.BusinessValidationException;
+import ma.smartshop.smartshop.exception.ResourceNotFoundException;
 import ma.smartshop.smartshop.repository.ClientRepository;
 import ma.smartshop.smartshop.repository.OrderRepository;
 import ma.smartshop.smartshop.repository.ProductRepository;
@@ -32,23 +34,23 @@ public class OrderService {
     private final ClientService clientService;
     private final OrderCalculationService orderCalculationService;
 
-        public OrderResponseDto createOrder(OrderCreateRequestDto dto) {
+    public OrderResponseDto createOrder(OrderCreateRequestDto dto) {
         if (dto.getItems() == null || dto.getItems().isEmpty()) {
-            throw new RuntimeException("Order must contain at least one item");
+            throw new BusinessValidationException("Order must contain at least one item");
         }
 
         Client client = clientRepository.findById(dto.getClientId())
-                .orElseThrow(() -> new RuntimeException("Client not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
 
         List<OrderItem> items = new ArrayList<>();
         BigDecimal subTotal = BigDecimal.ZERO;
 
         for (OrderItemRequestDto itemDto : dto.getItems()) {
             Product product = productRepository.findById(itemDto.getProductId())
-                    .orElseThrow(() -> new RuntimeException("Product not found"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
             if (product.getStockQuantity() < itemDto.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for product id " + product.getId());
+                throw new BusinessValidationException("Insufficient stock for product id " + product.getId());
             }
 
             BigDecimal unitPrice = product.getUnitPrice();
@@ -98,7 +100,7 @@ public class OrderService {
 
     public OrderResponseDto getOrderById(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         return toResponseDto(order);
     }
 
@@ -142,14 +144,14 @@ public class OrderService {
 
     public OrderResponseDto confirmOrder(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Only pending orders can be confirmed");
+            throw new BusinessValidationException("Only pending orders can be confirmed");
         }
 
         if (order.getRemainingAmount().compareTo(BigDecimal.ZERO) > 0) {
-            throw new RuntimeException("Order is not fully paid");
+            throw new BusinessValidationException("Order is not fully paid");
         }
 
         order.setStatus(OrderStatus.CONFIRMED);
@@ -162,10 +164,10 @@ public class OrderService {
 
     public OrderResponseDto cancelOrder(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Only pending orders can be canceled");
+            throw new BusinessValidationException("Only pending orders can be canceled");
         }
 
         order.setStatus(OrderStatus.CANCELED);
@@ -176,10 +178,10 @@ public class OrderService {
 
     public OrderResponseDto rejectOrder(Long id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Only pending orders can be rejected");
+            throw new BusinessValidationException("Only pending orders can be rejected");
         }
 
         order.setStatus(OrderStatus.REJECTED);

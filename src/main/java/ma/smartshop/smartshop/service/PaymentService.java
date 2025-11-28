@@ -11,6 +11,8 @@ import ma.smartshop.smartshop.dto.payment.PaymentResponseDto;
 import ma.smartshop.smartshop.mapper.PaymentMapper;
 import ma.smartshop.smartshop.repository.OrderRepository;
 import ma.smartshop.smartshop.repository.PaymentRepository;
+import ma.smartshop.smartshop.exception.BusinessValidationException;
+import ma.smartshop.smartshop.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,22 +33,22 @@ public class PaymentService {
 
     public PaymentResponseDto createPayment(PaymentCreateRequestDto dto) {
         if (dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("Payment amount must be positive");
+            throw new BusinessValidationException("Payment amount must be positive");
         }
 
         if (dto.getAmount().compareTo(MAX_PAYMENT_AMOUNT) > 0) {
-            throw new RuntimeException("Payment amount exceeds legal limit");
+            throw new BusinessValidationException("Payment amount exceeds legal limit");
         }
 
         Order order = orderRepository.findById(dto.getOrderId())
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new RuntimeException("Payments can only be registered on pending orders");
+            throw new BusinessValidationException("Payments can only be registered on pending orders");
         }
 
         if (dto.getAmount().compareTo(order.getRemainingAmount()) > 0) {
-            throw new RuntimeException("Payment amount exceeds remaining amount");
+            throw new BusinessValidationException("Payment amount exceeds remaining amount");
         }
 
         int nextNumber = paymentRepository.countByOrder(order) + 1;
@@ -86,7 +88,7 @@ public class PaymentService {
 
     public java.util.List<PaymentResponseDto> getPaymentsByOrderId(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+               .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
 
         java.util.List<Payment> payments = paymentRepository.findByOrderOrderByPaymentNumberAsc(order);
         java.util.List<PaymentResponseDto> dtos = new java.util.ArrayList<>();
