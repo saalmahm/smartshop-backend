@@ -19,4 +19,13 @@ public class PaymentController {
         PaymentResponseDto response = paymentService.createPayment(dto);
         return ResponseEntity.ok(response);
     }
+    @PatchMapping("/{id}/encash")
+    public PaymentResponseDto encashPayment(@PathVariable Long id) {
+        return paymentService.encashPayment(id);
+    }
+
+    @PatchMapping("/{id}/reject")
+    public PaymentResponseDto rejectPayment(@PathVariable Long id) {
+        return paymentService.rejectPayment(id);
+    }
 }

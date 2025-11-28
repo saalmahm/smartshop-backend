@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
@@ -31,30 +33,40 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final PaymentMapper paymentMapper;
 
+    @Transactional
     public PaymentResponseDto createPayment(PaymentCreateRequestDto dto) {
         if (dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessValidationException("Payment amount must be positive");
+            throw new BusinessValidationException("Le montant du paiement doit être positif");
         }
 
         if (dto.getAmount().compareTo(MAX_PAYMENT_AMOUNT) > 0) {
-            throw new BusinessValidationException("Payment amount exceeds legal limit");
+            throw new BusinessValidationException("Le montant du paiement dépasse la limite légale");
         }
 
         Order order = orderRepository.findById(dto.getOrderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Commande non trouvée"));
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new BusinessValidationException("Payments can only be registered on pending orders");
+            throw new BusinessValidationException("Les paiements ne peuvent être enregistrés que sur des commandes en attente");
         }
 
         if (dto.getAmount().compareTo(order.getRemainingAmount()) > 0) {
-            throw new BusinessValidationException("Payment amount exceeds remaining amount");
+            throw new BusinessValidationException("Le montant du paiement dépasse le montant restant dû");
         }
 
-        int nextNumber = paymentRepository.countByOrder(order) + 1;
+        // Numéro de paiement
+        List<Payment> existingPayments = paymentRepository.findByOrderOrderByPaymentNumberAsc(order);
+        int nextPaymentNumber = existingPayments.size() + 1;
 
+        // Date de paiement (auto si null)
         LocalDate paymentDate = dto.getPaymentDate() != null ? dto.getPaymentDate() : LocalDate.now();
 
+        // Référence (auto si null ou vide)
+        String reference = (dto.getReference() == null || dto.getReference().isBlank())
+                ? "PAY-" + order.getId() + "-" + nextPaymentNumber
+                : dto.getReference();
+
+        // Statut et date d'encaissement
         PaymentStatus status;
         LocalDate encashmentDate = null;
 
@@ -67,14 +79,14 @@ public class PaymentService {
 
         Payment payment = Payment.builder()
                 .order(order)
-                .paymentNumber(nextNumber)
+                .paymentNumber(nextPaymentNumber)
                 .amount(dto.getAmount())
                 .type(dto.getType())
                 .status(status)
                 .paymentDate(paymentDate)
                 .encashmentDate(encashmentDate)
                 .dueDate(dto.getDueDate())
-                .reference(dto.getReference())
+                .reference(reference)
                 .bank(dto.getBank())
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -115,5 +127,42 @@ public class PaymentService {
 
         order.setRemainingAmount(newRemaining);
         orderRepository.save(order);
+    }
+
+    public PaymentResponseDto encashPayment(Long paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paiement non trouvé"));
+
+        if (payment.getStatus() != PaymentStatus.EN_ATTENTE) {
+            throw new BusinessValidationException("Seuls les paiements en attente peuvent être encaissés");
+        }
+
+        payment.setStatus(PaymentStatus.ENCAISSE);
+        payment.setEncashmentDate(LocalDate.now());
+
+        Payment saved = paymentRepository.save(payment);
+
+        // Recalcul du montant restant de la commande
+        recalculateRemainingAmount(payment.getOrder());
+
+        return paymentMapper.toResponseDto(saved);
+    }
+
+    public PaymentResponseDto rejectPayment(Long paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Paiement non trouvé"));
+
+        if (payment.getStatus() != PaymentStatus.EN_ATTENTE) {
+            throw new BusinessValidationException("Seuls les paiements en attente peuvent être rejetés");
+        }
+
+        payment.setStatus(PaymentStatus.REJETE);
+        payment.setEncashmentDate(null);
+
+        Payment saved = paymentRepository.save(payment);
+
+        recalculateRemainingAmount(payment.getOrder());
+
+        return paymentMapper.toResponseDto(saved);
     }
 }
