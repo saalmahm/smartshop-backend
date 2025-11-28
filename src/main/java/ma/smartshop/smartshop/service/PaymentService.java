@@ -31,53 +31,56 @@ public class PaymentService {
     private final OrderRepository orderRepository;
     private final PaymentMapper paymentMapper;
 
+   @Transactional
     public PaymentResponseDto createPayment(PaymentCreateRequestDto dto) {
         if (dto.getAmount() == null || dto.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessValidationException("Payment amount must be positive");
+            throw new BusinessValidationException("Le montant du paiement doit être positif");
         }
 
         if (dto.getAmount().compareTo(MAX_PAYMENT_AMOUNT) > 0) {
-            throw new BusinessValidationException("Payment amount exceeds legal limit");
+            throw new BusinessValidationException("Le montant du paiement dépasse la limite légale");
         }
 
         Order order = orderRepository.findById(dto.getOrderId())
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Commande non trouvée"));
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new BusinessValidationException("Payments can only be registered on pending orders");
+            throw new BusinessValidationException("Les paiements ne peuvent être enregistrés que sur des commandes en attente");
         }
 
         if (dto.getAmount().compareTo(order.getRemainingAmount()) > 0) {
-            throw new BusinessValidationException("Payment amount exceeds remaining amount");
+            throw new BusinessValidationException("Le montant du paiement dépasse le montant restant dû");
         }
 
-        int nextNumber = paymentRepository.countByOrder(order) + 1;
+        List<Payment> existingPayments = paymentRepository.findByOrderOrderByPaymentNumberAsc(order);
+        int nextPaymentNumber = existingPayments.size() + 1;
 
-        LocalDate paymentDate = dto.getPaymentDate() != null ? dto.getPaymentDate() : LocalDate.now();
+        Payment payment = paymentMapper.toEntity(dto);
+        payment.setOrder(order);
+        payment.setPaymentNumber(nextPaymentNumber);
+
+        if (payment.getPaymentDate() == null) {
+            payment.setPaymentDate(LocalDate.now());
+        }
+
+        if (payment.getReference() == null || payment.getReference().isBlank()) {
+            String autoRef = "PAY-" + order.getId() + "-" + nextPaymentNumber;
+            payment.setReference(autoRef);
+        }
 
         PaymentStatus status;
         LocalDate encashmentDate = null;
 
         if (dto.getType() == PaymentType.ESPECES) {
             status = PaymentStatus.ENCAISSE;
-            encashmentDate = paymentDate;
+            encashmentDate = payment.getPaymentDate(); 
         } else {
             status = PaymentStatus.EN_ATTENTE;
         }
-
-        Payment payment = Payment.builder()
-                .order(order)
-                .paymentNumber(nextNumber)
-                .amount(dto.getAmount())
-                .type(dto.getType())
-                .status(status)
-                .paymentDate(paymentDate)
-                .encashmentDate(encashmentDate)
-                .dueDate(dto.getDueDate())
-                .reference(dto.getReference())
-                .bank(dto.getBank())
-                .createdAt(LocalDateTime.now())
-                .build();
+        
+        payment.setStatus(status);
+        payment.setEncashmentDate(encashmentDate);
+        payment.setCreatedAt(LocalDateTime.now());
 
         Payment saved = paymentRepository.save(payment);
 
