@@ -16,6 +16,7 @@ import ma.smartshop.smartshop.exception.BusinessValidationException;
 import ma.smartshop.smartshop.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -30,6 +31,8 @@ public class ClientService {
     private final ClientMapper clientMapper;
     private final LoyaltyService loyaltyService;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+
 
     public ClientResponseDto createClient(ClientRequestDto dto) {
         Client client = clientMapper.toEntity(dto);
@@ -109,10 +112,10 @@ public class ClientService {
         });
 
         User user = User.builder()
-                .username(dto.getUsername())
-                .password(dto.getPassword())
-                .role(UserRole.CLIENT)
-                .build();
+            .username(dto.getUsername())
+            .password(passwordEncoder.encode(dto.getPassword()))
+            .role(UserRole.CLIENT)
+            .build();
 
         User savedUser = userRepository.save(user);
 
