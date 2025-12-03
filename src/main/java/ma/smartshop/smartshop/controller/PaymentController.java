@@ -1,5 +1,5 @@
 package ma.smartshop.smartshop.controller;
-
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ma.smartshop.smartshop.dto.payment.PaymentCreateRequestDto;
 import ma.smartshop.smartshop.dto.payment.PaymentResponseDto;
@@ -15,7 +15,7 @@ public class PaymentController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<PaymentResponseDto> createPayment(@RequestBody PaymentCreateRequestDto dto) {
+    public ResponseEntity<PaymentResponseDto> createPayment(@Valid @RequestBody PaymentCreateRequestDto dto) {
         PaymentResponseDto response = paymentService.createPayment(dto);
         return ResponseEntity.ok(response);
     }

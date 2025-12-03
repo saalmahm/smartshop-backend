@@ -5,9 +5,11 @@ import ma.smartshop.smartshop.client.dto.ClientRequestDto;
 import ma.smartshop.smartshop.client.dto.ClientResponseDto;
 import ma.smartshop.smartshop.dto.client.ClientUserCreateRequestDto;
 import ma.smartshop.smartshop.service.ClientService;
+import ma.smartshop.smartshop.service.OrderService;
+import ma.smartshop.smartshop.dto.order.OrderResponseDto;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import jakarta.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -16,14 +18,15 @@ import java.util.List;
 public class ClientController {
 
     private final ClientService clientService;
+    private final OrderService orderService;
 
     @PostMapping
-    public ResponseEntity<ClientResponseDto> createClient(@RequestBody ClientRequestDto dto) {
+    public ResponseEntity<ClientResponseDto> createClient(@Valid @RequestBody ClientRequestDto dto) {
         return ResponseEntity.ok(clientService.createClient(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ClientResponseDto> updateClient(@PathVariable Long id,
+    public ResponseEntity<ClientResponseDto> updateClient(@PathVariable Long id, @Valid
                                                           @RequestBody ClientRequestDto dto) {
         return ResponseEntity.ok(clientService.updateClient(id, dto));
     }
@@ -45,8 +48,13 @@ public class ClientController {
     }
 
     @PostMapping("/{id}/user")
-    public ResponseEntity<ClientResponseDto> createClientUser(@PathVariable Long id,
+    public ResponseEntity<ClientResponseDto> createClientUser(@PathVariable Long id,@Valid 
                                                               @RequestBody ClientUserCreateRequestDto dto) {
         return ResponseEntity.ok(clientService.createUserForClient(id, dto));
+    }
+
+    @GetMapping("/{id}/orders")
+    public List<OrderResponseDto> getClientOrders(@PathVariable Long id) {
+        return orderService.getOrdersForClient(id);
     }
 }

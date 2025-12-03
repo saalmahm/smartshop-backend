@@ -6,7 +6,11 @@ import ma.smartshop.smartshop.client.dto.ClientProfileDto;
 import ma.smartshop.smartshop.service.ClientService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
+import ma.smartshop.smartshop.dto.order.OrderResponseDto;
+import ma.smartshop.smartshop.repository.ClientRepository;
+import ma.smartshop.smartshop.exception.ResourceNotFoundException;
+import ma.smartshop.smartshop.service.OrderService;
+import ma.smartshop.smartshop.entity.Client;
 import java.util.List;
 
 @RestController
@@ -15,6 +19,8 @@ import java.util.List;
 public class ClientMeController {
 
     private final ClientService clientService;
+    private final ClientRepository clientRepository;
+    private final OrderService orderService;
 
     @GetMapping("/profile")
     public ResponseEntity<ClientProfileDto> getMyProfile(HttpSession session) {
@@ -24,9 +30,15 @@ public class ClientMeController {
     }
 
     @GetMapping("/orders")
-    public ResponseEntity<List<Object>> getMyOrders(HttpSession session) {
+    public List<OrderResponseDto> getMyOrders(HttpSession session) {
         Long userId = (Long) session.getAttribute("USER_ID");
-        List<Object> orders = clientService.getOrderHistoryForUser(userId);
-        return ResponseEntity.ok(orders);
+        if (userId == null) {
+            throw new ResourceNotFoundException("User not authenticated");
+        }
+
+        Client client = clientRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Client not found for current user"));
+
+        return orderService.getOrdersForClient(client.getId());
     }
 }
