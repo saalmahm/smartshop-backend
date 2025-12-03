@@ -39,18 +39,27 @@ public class OrderService {
             throw new BusinessValidationException("Order must contain at least one item");
         }
 
-        Client client = clientRepository.findById(dto.getClientId())
-                .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
+       Client client = clientRepository.findById(dto.getClientId())
+        .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
+
+        // Contrôle d'usage unique du code promo
+        if (dto.getPromoCode() != null && !dto.getPromoCode().isBlank()) {
+            if (orderRepository.existsByPromoCode(dto.getPromoCode())) {
+                throw new BusinessValidationException("Promo code already used");
+            }
+        }
 
         List<OrderItem> items = new ArrayList<>();
         BigDecimal subTotal = BigDecimal.ZERO;
+        boolean hasInsufficientStock = false;
+
 
         for (OrderItemRequestDto itemDto : dto.getItems()) {
             Product product = productRepository.findById(itemDto.getProductId())
                     .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
             if (product.getStockQuantity() < itemDto.getQuantity()) {
-                throw new BusinessValidationException("Insufficient stock for product id " + product.getId());
+                hasInsufficientStock = true;
             }
 
             BigDecimal unitPrice = product.getUnitPrice();
@@ -66,7 +75,9 @@ public class OrderService {
             items.add(item);
             subTotal = subTotal.add(lineTotal);
 
-            product.setStockQuantity(product.getStockQuantity() - itemDto.getQuantity());
+            if (!hasInsufficientStock) {
+                product.setStockQuantity(product.getStockQuantity() - itemDto.getQuantity());
+            }
         }
 
         OrderCalculationService.OrderAmounts amounts = orderCalculationService.calculate(
@@ -84,7 +95,7 @@ public class OrderService {
                 .tvaAmount(amounts.tvaAmount())
                 .totalTtc(amounts.totalTtc())
                 .promoCode(dto.getPromoCode())
-                .status(OrderStatus.PENDING)
+                .status(hasInsufficientStock ? OrderStatus.REJECTED : OrderStatus.PENDING)
                 .remainingAmount(amounts.totalTtc())
                 .build();
 
@@ -189,4 +200,18 @@ public class OrderService {
 
         return toResponseDto(order);
     }
+
+    public List<OrderResponseDto> getOrdersForClient(Long clientId) {
+    Client client = clientRepository.findById(clientId)
+            .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
+
+    List<Order> orders = orderRepository.findByClientOrderByCreatedAtDesc(client);
+    List<OrderResponseDto> dtos = new ArrayList<>();
+
+    for (Order order : orders) {
+        dtos.add(toResponseDto(order));
+    }
+
+    return dtos;
+}
 }
