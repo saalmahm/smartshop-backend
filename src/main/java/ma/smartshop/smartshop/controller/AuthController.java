@@ -1,5 +1,5 @@
 package ma.smartshop.smartshop.controller;
-
+import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import ma.smartshop.smartshop.dto.auth.LoginRequest;
@@ -19,7 +19,7 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest request,
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request,
                                 HttpSession session) {
 
         User user = userRepository.findByUsername(request.getUsername())
