@@ -1,4 +1,4 @@
-package ma.smartshop.smartshop.client.dto;
+package ma.smartshop.smartshop.dto.client;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 

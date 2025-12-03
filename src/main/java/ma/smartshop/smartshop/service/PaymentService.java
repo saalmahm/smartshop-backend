@@ -165,4 +165,11 @@ public class PaymentService {
 
         return paymentMapper.toResponseDto(saved);
     }
+    public List<Order> partial(){
+        return paymentRepository.findAll().stream()
+                .filter(p -> p.getType() == PaymentType.ESPECES && p.getType() == PaymentType.CHEQUE
+                        && p.getType() == PaymentType.VIREMENT)
+                .map(Payment::getOrder)
+                .toList();
+    }
 }

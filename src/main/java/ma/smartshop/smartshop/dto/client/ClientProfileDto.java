@@ -1,4 +1,4 @@
-package ma.smartshop.smartshop.client.dto;
+package ma.smartshop.smartshop.dto.client;
 
 import lombok.Data;
 import ma.smartshop.smartshop.enums.CustomerTier;

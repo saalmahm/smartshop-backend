@@ -1,9 +1,9 @@
 package ma.smartshop.smartshop.service;
 
 import lombok.RequiredArgsConstructor;
-import ma.smartshop.smartshop.client.dto.ClientProfileDto;
-import ma.smartshop.smartshop.client.dto.ClientRequestDto;
-import ma.smartshop.smartshop.client.dto.ClientResponseDto;
+import ma.smartshop.smartshop.dto.client.ClientProfileDto;
+import ma.smartshop.smartshop.dto.client.ClientRequestDto;
+import ma.smartshop.smartshop.dto.client.ClientResponseDto;
 import ma.smartshop.smartshop.client.mapper.ClientMapper;
 import ma.smartshop.smartshop.entity.Client;
 import ma.smartshop.smartshop.enums.CustomerTier;
