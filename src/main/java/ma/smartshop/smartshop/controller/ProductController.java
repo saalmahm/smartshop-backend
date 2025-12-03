@@ -1,5 +1,5 @@
 package ma.smartshop.smartshop.controller;
-
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ma.smartshop.smartshop.product.dto.ProductRequestDto;
 import ma.smartshop.smartshop.product.dto.ProductResponseDto;
@@ -17,12 +17,12 @@ public class ProductController {
     private final ProductService productService;
 
     @PostMapping
-    public ResponseEntity<ProductResponseDto> createProduct(@RequestBody ProductRequestDto dto) {
+    public ResponseEntity<ProductResponseDto> createProduct(@Valid @RequestBody ProductRequestDto dto) {
         return ResponseEntity.ok(productService.createProduct(dto));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long id,
+    public ResponseEntity<ProductResponseDto> updateProduct(@PathVariable Long id,@Valid
                                                             @RequestBody ProductRequestDto dto) {
         return ResponseEntity.ok(productService.updateProduct(id, dto));
     }
