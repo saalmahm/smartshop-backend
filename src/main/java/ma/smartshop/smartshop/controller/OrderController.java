@@ -1,5 +1,5 @@
 package ma.smartshop.smartshop.controller;
-
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import ma.smartshop.smartshop.dto.order.OrderCreateRequestDto;
 import ma.smartshop.smartshop.dto.order.OrderResponseDto;
@@ -20,7 +20,7 @@ public class OrderController {
     private final PaymentService paymentService;
 
     @PostMapping
-    public ResponseEntity<OrderResponseDto> createOrder(@RequestBody OrderCreateRequestDto dto) {
+    public ResponseEntity<OrderResponseDto> createOrder(@Valid @RequestBody OrderCreateRequestDto dto) {
         OrderResponseDto response = orderService.createOrder(dto);
         return ResponseEntity.ok(response);
     }
