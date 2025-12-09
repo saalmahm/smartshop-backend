@@ -26,7 +26,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class OrderService {
+public class OrderService extends Object {
 
     private final OrderRepository orderRepository;
     private final ClientRepository clientRepository;
@@ -39,8 +39,8 @@ public class OrderService {
             throw new BusinessValidationException("Order must contain at least one item");
         }
 
-       Client client = clientRepository.findById(dto.getClientId())
-        .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
+        Client client = clientRepository.findById(dto.getClientId())
+                .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
 
         // Contrôle d'usage unique du code promo
         if (dto.getPromoCode() != null && !dto.getPromoCode().isBlank()) {
@@ -202,16 +202,16 @@ public class OrderService {
     }
 
     public List<OrderResponseDto> getOrdersForClient(Long clientId) {
-    Client client = clientRepository.findById(clientId)
-            .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
+        Client client = clientRepository.findById(clientId)
+                .orElseThrow(() -> new ResourceNotFoundException("Client not found"));
 
-    List<Order> orders = orderRepository.findByClientOrderByCreatedAtDesc(client);
-    List<OrderResponseDto> dtos = new ArrayList<>();
+        List<Order> orders = orderRepository.findByClientOrderByCreatedAtDesc(client);
+        List<OrderResponseDto> dtos = new ArrayList<>();
 
-    for (Order order : orders) {
-        dtos.add(toResponseDto(order));
+        for (Order order : orders) {
+            dtos.add(toResponseDto(order));
+        }
+
+        return dtos;
     }
-
-    return dtos;
-}
 }

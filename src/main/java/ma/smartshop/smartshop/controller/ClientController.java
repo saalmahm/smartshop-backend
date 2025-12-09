@@ -1,8 +1,8 @@
 package ma.smartshop.smartshop.controller;
 
 import lombok.RequiredArgsConstructor;
-import ma.smartshop.smartshop.client.dto.ClientRequestDto;
-import ma.smartshop.smartshop.client.dto.ClientResponseDto;
+import ma.smartshop.smartshop.dto.client.ClientRequestDto;
+import ma.smartshop.smartshop.dto.client.ClientResponseDto;
 import ma.smartshop.smartshop.dto.client.ClientUserCreateRequestDto;
 import ma.smartshop.smartshop.service.ClientService;
 import ma.smartshop.smartshop.service.OrderService;

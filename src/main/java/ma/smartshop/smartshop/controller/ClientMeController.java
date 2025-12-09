@@ -2,7 +2,7 @@ package ma.smartshop.smartshop.controller;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import ma.smartshop.smartshop.client.dto.ClientProfileDto;
+import ma.smartshop.smartshop.dto.client.ClientProfileDto;
 import ma.smartshop.smartshop.service.ClientService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

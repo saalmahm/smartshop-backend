@@ -1,5 +1,5 @@
 package ma.smartshop.smartshop.exception;
-
+import ma.smartshop.smartshop.exception.AuthenticationException;
 import ma.smartshop.smartshop.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +58,19 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
+
+    @ExceptionHandler(AuthenticationException.class)
+        public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException ex,
+                                                                HttpServletRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.UNAUTHORIZED.value(),        // 401
+                "Unauthorized",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+        }
 
    @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(Exception ex,

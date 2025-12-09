@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import ma.smartshop.smartshop.dto.auth.LoginRequest;
 import ma.smartshop.smartshop.entity.User;
 import ma.smartshop.smartshop.repository.UserRepository;
+import ma.smartshop.smartshop.exception.AuthenticationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -23,17 +24,17 @@ public class AuthController {
                                 HttpSession session) {
 
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new AuthenticationException("Invalid credentials"));
 
         if (user.getPassword().startsWith("$2a$")) {
             // Mot de passe déjà encodé en BCrypt
             if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-                throw new RuntimeException("Invalid credentials");
+                throw new AuthenticationException("Invalid credentials");
             }
         } else {
             // Ancien format en clair
             if (!user.getPassword().equals(request.getPassword())) {
-                throw new RuntimeException("Invalid credentials");
+                throw new AuthenticationException("Invalid credentials");
             }
         }
 
