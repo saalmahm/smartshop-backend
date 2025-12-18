@@ -10,5 +10,4 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByClientOrderByCreatedAtDesc(Client client);
     boolean existsByPromoCode(String promoCode);
 
-
 }
