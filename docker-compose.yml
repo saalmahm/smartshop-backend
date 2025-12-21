@@ -1,0 +1,66 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: smartshop-db
+    environment:
+      POSTGRES_DB: smartshop_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: salmahm
+    ports:
+      - "5432:5432"
+    volumes:
+      - smartshop-db-data:/var/lib/postgresql/data
+
+  backend:
+    image: salmahamdi/smartshop-backend:1.0
+    container_name: smartshop-backend
+    depends_on:
+      - db
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/smartshop_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: salmahm
+    ports:
+      - "8080:8080"
+    # backend et db communiquent via le nom de service "db"
+
+volumes:
+  smartshop-db-data:Container CPU usage
+
+0.24% / 800% (8 CPUs available)
+Container memory usage
+
+363.17MB / 7.45GB
+​
+Search
+
+Only show running containers
+Name
+Actions
+smartshop
+-
+-
+-
+0.24%
+23 minutes ago
+db
+
+5515d09b09b9
+
+postgres:15
+5432:5432⁠
+0%
+23 minutes ago
+backend
+
+493a4b19d1b4
+
+smartshop-backend
+8080:8080⁠
+0.24%
+23 minutes ago
+Showing 3 items
+
+ 

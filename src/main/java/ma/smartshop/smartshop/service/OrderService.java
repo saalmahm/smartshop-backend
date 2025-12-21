@@ -26,7 +26,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class OrderService extends Object {
+public class OrderService {
 
     private final OrderRepository orderRepository;
     private final ClientRepository clientRepository;
@@ -85,7 +85,6 @@ public class OrderService extends Object {
                 client,
                 dto.getPromoCode()
         );
-
         Order order = Order.builder()
                 .client(client)
                 .createdAt(LocalDateTime.now())
@@ -214,4 +213,7 @@ public class OrderService extends Object {
 
         return dtos;
     }
+
+    //LES 5 premier client effectuer plus cher commande
+
 }
